@@ -7,9 +7,9 @@ import styles from './Header.module.css'
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/colecoes', label: 'Coleções' },
+  { href: '/atendimento', label: 'Atendimento' },
   { href: '/nossa-historia', label: 'Nossa História' },
   { href: '/personalizacao', label: 'Personalização' },
-  { href: '/atendimento', label: 'Atendimento' },
 ]
 
 export default function Header() {
@@ -38,7 +38,7 @@ export default function Header() {
         </button>
 
         <ul className={`${styles.navLinks} ${styles.leftLinks}`}>
-          {navLinks.slice(0, 2).map((link) => (
+          {navLinks.slice(0, 3).map((link) => (
             <li key={link.href}>
               <Link href={link.href} className={styles.navLink}>
                 {link.label}
@@ -53,7 +53,7 @@ export default function Header() {
         </Link>
 
         <ul className={`${styles.navLinks} ${styles.rightLinks}`}>
-          {navLinks.slice(2).map((link) => (
+          {navLinks.slice(3).map((link) => (
             <li key={link.href}>
               <Link href={link.href} className={styles.navLink}>
                 {link.label}

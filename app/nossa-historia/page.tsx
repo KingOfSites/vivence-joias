@@ -53,7 +53,7 @@ export default function NossaHistoriaPage() {
               <div className={styles.imageColumn}>
                 <div className={styles.imageWrapper}>
                   <Image
-                    src="/images/historia.jpg"
+                    src="/images/historia.png"
                     alt="Ateliê Vivence Jóias"
                     fill
                     className={styles.image}

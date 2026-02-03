@@ -109,7 +109,7 @@ export default function PersonalizacaoPage() {
               </div>
               <div className={styles.introImage}>
                 <Image
-                  src="/images/personalizacao.jpg"
+                  src="/images/personalizacao.png"
                   alt="Processo de personalização de joias"
                   fill
                   className={styles.image}
