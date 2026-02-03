@@ -1,0 +1,168 @@
+.collections {
+  padding: 8rem 2rem;
+  background: var(--color-background);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.label {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 400;
+  color: var(--color-text-primary);
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.card {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--color-background-card);
+}
+
+.imageWrapper {
+  position: absolute;
+  inset: 0;
+}
+
+.image {
+  object-fit: cover;
+  transition: transform var(--transition-slow), opacity var(--transition-medium);
+}
+
+.card:hover .image:not(.hoverImage) {
+  transform: scale(1.05);
+}
+
+.image.hidden {
+  opacity: 0;
+}
+
+.hoverImage {
+  opacity: 0;
+}
+
+.hoverImage.visible {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(15, 15, 15, 0.95) 100%
+  );
+  transition: var(--transition-medium);
+}
+
+.card:hover .overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(15, 15, 15, 0.2) 0%,
+    rgba(15, 15, 15, 0.4) 40%,
+    rgba(15, 15, 15, 0.98) 100%
+  );
+}
+
+.content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2.5rem;
+  z-index: 1;
+}
+
+.cardTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 400;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.cardDescription {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.cardLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  transition: var(--transition-medium);
+}
+
+.cardLink svg {
+  transition: transform var(--transition-medium);
+}
+
+.card:hover .cardLink svg {
+  transform: translateX(5px);
+}
+
+@media (max-width: 768px) {
+  .collections {
+    padding: 5rem 1.5rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .card {
+    aspect-ratio: 3 / 4;
+  }
+
+  .content {
+    padding: 1.5rem;
+  }
+}
