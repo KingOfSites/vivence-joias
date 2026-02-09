@@ -2,6 +2,9 @@ import React from "react"
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, Inter } from 'next/font/google'
 
+import { Toaster } from '@/components/ui/toaster'
+import { Toaster as SonnerToaster } from 'sonner'
+import { CartProvider } from '@/context/CartContext'
 import './globals.css'
 
 const playfair = Playfair_Display({
@@ -33,7 +36,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${playfair.variable} ${inter.variable}`}>{children}</body>
+      <body className={`${playfair.variable} ${inter.variable}`}>
+        <CartProvider>
+          {children}
+          <Toaster />
+          <SonnerToaster
+            theme="dark"
+            position="top-center"
+            richColors
+            closeButton
+            toastOptions={{
+              style: {
+                background: 'var(--color-background-card)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-primary)',
+              },
+            }}
+          />
+        </CartProvider>
+      </body>
     </html>
   )
 }

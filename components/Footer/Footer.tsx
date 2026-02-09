@@ -21,6 +21,7 @@ export default function Footer() {
             <ul className={styles.linksList}>
               <li><Link href="/" className={styles.link}>Home</Link></li>
               <li><Link href="/colecoes" className={styles.link}>Coleções</Link></li>
+              <li><Link href="/carrinho" className={styles.link}>Carrinho</Link></li>
               <li><Link href="/nossa-historia" className={styles.link}>Nossa História</Link></li>
               <li><Link href="/personalizacao" className={styles.link}>Personalização</Link></li>
             </ul>

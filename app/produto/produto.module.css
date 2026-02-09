@@ -241,6 +241,12 @@
   background: rgba(212, 175, 55, 0.1);
 }
 
+.sizeButtonSelected {
+  color: var(--color-gold);
+  border-color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.1);
+}
+
 .sizeHelp {
   font-family: var(--font-sans);
   font-size: 0.85rem;
@@ -255,6 +261,52 @@
 
 .sizeLink:hover {
   color: var(--color-gold-hover);
+}
+
+/* Quantity */
+.quantityRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.quantityLabel {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.quantityControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantityButton {
+  width: 44px;
+  height: 44px;
+  font-size: 1.25rem;
+  color: var(--color-text-primary);
+  background: var(--color-background-card);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: var(--transition-medium);
+}
+
+.quantityButton:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+.quantityValue {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  min-width: 2rem;
+  text-align: center;
+  color: var(--color-text-primary);
 }
 
 /* Actions */
@@ -286,6 +338,26 @@
   border-color: var(--color-gold-hover);
   transform: translateY(-2px);
   box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+}
+
+.buyButtonSecondary {
+  width: 100%;
+  padding: 1rem 2rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: var(--transition-medium);
+}
+
+.buyButtonSecondary:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.05);
 }
 
 .wishlistButton {

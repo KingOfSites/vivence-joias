@@ -172,6 +172,49 @@
   color: var(--color-gold);
 }
 
+.cartLink {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  transition: var(--transition-medium);
+}
+
+.cartLink:hover {
+  color: var(--color-gold);
+}
+
+.cartLinkIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cartBadge {
+  position: absolute;
+  top: -10px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-background);
+  background: var(--color-gold);
+  border-radius: 999px;
+  transform: translate(50%, -50%);
+}
+
 @media (max-width: 968px) {
   .navLinks {
     display: none;

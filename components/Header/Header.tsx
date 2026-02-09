@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { ShoppingBag } from 'lucide-react'
+import { useCart } from '@/context/CartContext'
 import styles from './Header.module.css'
 
 const navLinks = [
@@ -15,6 +17,7 @@ const navLinks = [
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { totalItems } = useCart()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,6 +63,17 @@ export default function Header() {
               </Link>
             </li>
           ))}
+          <li>
+            <Link href="/carrinho" className={styles.cartLink}>
+              <span className={styles.cartLinkIcon}>
+                <ShoppingBag size={20} />
+                {totalItems > 0 && (
+                  <span className={styles.cartBadge}>{totalItems > 99 ? '99+' : totalItems}</span>
+                )}
+              </span>
+              Carrinho
+            </Link>
+          </li>
         </ul>
 
         {/* Mobile Menu */}
@@ -76,6 +90,15 @@ export default function Header() {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link
+                href="/carrinho"
+                className={styles.mobileNavLink}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Carrinho {totalItems > 0 ? `(${totalItems})` : ''}
+              </Link>
+            </li>
           </ul>
         </div>
       </nav>
