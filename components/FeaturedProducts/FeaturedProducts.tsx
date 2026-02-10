@@ -1,45 +1,21 @@
-'use client'
-
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import Image from 'next/image'
 import styles from './FeaturedProducts.module.css'
 
-const products = [
-  {
-    id: 1,
-    name: 'Anel Solitário Eterno',
-    price: 'R$ 2.890,00',
-    image: '/images/product-1.png',
-    category: 'Ouro 18K',
-    href: '/produto/anel-solitario-eterno',
-  },
-  {
-    id: 2,
-    name: 'Colar Pérola Lunar',
-    price: 'R$ 1.590,00',
-    image: '/images/product-2.png',
-    category: 'Prata 925',
-    href: '/produto/colar-perola-lunar',
-  },
-  {
-    id: 3,
-    name: 'Brincos Aurora',
-    price: 'R$ 890,00',
-    image: '/images/product-3.png',
-    category: 'Prata 925',
-    href: '/produto/brincos-aurora',
-  },
-  {
-    id: 4,
-    name: 'Pulseira Corrente Real',
-    price: 'R$ 3.490,00',
-    image: '/images/product-4.png',
-    category: 'Ouro 18K',
-    href: '/produto/pulseira-corrente-real',
-  },
-]
+interface FeaturedProduct {
+  id: number
+  name: string
+  price: string
+  image: string
+  category: string
+  href: string
+}
 
-export default function FeaturedProducts() {
+interface FeaturedProductsProps {
+  products: FeaturedProduct[]
+}
+
+export default function FeaturedProducts({ products }: FeaturedProductsProps) {
   return (
     <section className={styles.featured}>
       <div className={styles.container}>
@@ -53,7 +29,7 @@ export default function FeaturedProducts() {
             <Link key={product.id} href={product.href} className={styles.card}>
               <div className={styles.imageWrapper}>
                 <Image
-                  src={product.image || "/placeholder.svg"}
+                  src={product.image || '/placeholder.svg'}
                   alt={product.name}
                   fill
                   className={styles.image}

@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from 'react'
 
+const CART_REFRESH_EVENT = 'cart:refresh'
+
 export interface CartItem {
   id: string
   productId: number
@@ -63,6 +65,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshCart()
+  }, [refreshCart])
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      refreshCart()
+    }
+    window.addEventListener(CART_REFRESH_EVENT, handleRefresh)
+    return () => window.removeEventListener(CART_REFRESH_EVENT, handleRefresh)
   }, [refreshCart])
 
   const addItem = useCallback<

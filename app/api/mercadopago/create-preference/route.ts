@@ -7,10 +7,11 @@ import { NextRequest, NextResponse } from 'next/server'
  * unit_price em reais (ex: 89.90 para R$ 89,90)
  */
 export async function POST(request: NextRequest) {
-  const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN
+  const accessToken =
+    process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN
   if (!accessToken) {
     return NextResponse.json(
-      { error: 'MERCADOPAGO_ACCESS_TOKEN não configurado. Adicione no .env' },
+      { error: 'Token do Mercado Pago não configurado. Adicione MP_ACCESS_TOKEN ou MERCADOPAGO_ACCESS_TOKEN no .env' },
       { status: 500 }
     )
   }

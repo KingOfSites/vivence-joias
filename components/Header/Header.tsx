@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ShoppingBag } from 'lucide-react'
+import { ShoppingBag, User, LogOut, ChevronDown } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
+import { useAuth } from '@/context/AuthContext'
 import styles from './Header.module.css'
 
 const navLinks = [
@@ -17,7 +18,20 @@ const navLinks = [
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
   const { totalItems } = useCart()
+  const { user, loading: authLoading, logout } = useAuth()
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,6 +78,48 @@ export default function Header() {
             </li>
           ))}
           <li>
+            {!authLoading && (
+              <>
+                {user ? (
+                  <div className={styles.userMenuWrap} ref={userMenuRef}>
+                    <button
+                      type="button"
+                      className={styles.userMenuButton}
+                      onClick={() => setUserMenuOpen(!userMenuOpen)}
+                      aria-expanded={userMenuOpen}
+                      aria-haspopup="true"
+                    >
+                      <User size={18} />
+                      <span className={styles.userName}>
+                        {user.name.split(' ')[0]}
+                      </span>
+                      <ChevronDown size={14} className={userMenuOpen ? styles.chevronOpen : ''} />
+                    </button>
+                    {userMenuOpen && (
+                      <div className={styles.userDropdown}>
+                        <span className={styles.userDropdownEmail}>{user.email}</span>
+                        <button
+                          type="button"
+                          className={styles.userDropdownItem}
+                          onClick={() => {
+                            setUserMenuOpen(false)
+                            logout()
+                          }}
+                        >
+                          <LogOut size={16} /> Sair
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link href="/login" className={styles.navLink}>
+                    Entrar
+                  </Link>
+                )}
+              </>
+            )}
+          </li>
+          <li>
             <Link href="/carrinho" className={styles.cartLink}>
               <span className={styles.cartLinkIcon}>
                 <ShoppingBag size={20} />
@@ -90,6 +146,33 @@ export default function Header() {
                 </Link>
               </li>
             ))}
+            {!authLoading && (
+              <li className={styles.mobileAuthWrap}>
+                {user ? (
+                  <>
+                    <span className={styles.mobileUser}>Olá, {user.name.split(' ')[0]}</span>
+                    <button
+                      type="button"
+                      className={styles.mobileNavLink}
+                      onClick={() => {
+                        setIsMobileMenuOpen(false)
+                        logout()
+                      }}
+                    >
+                      Sair
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    className={styles.mobileNavLink}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Entrar
+                  </Link>
+                )}
+              </li>
+            )}
             <li>
               <Link
                 href="/carrinho"

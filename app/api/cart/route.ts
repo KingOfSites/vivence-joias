@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { getPrisma } from '@/lib/prisma'
+import { getCurrentUser } from '@/lib/auth'
 
 const CART_COOKIE = 'vivence_cart_id'
 
@@ -8,20 +9,61 @@ function getOrCreateSessionId(): string {
   return crypto.randomUUID()
 }
 
-export async function GET(request: NextRequest) {
-  try {
-    const cookieStore = await cookies()
-    let sessionId = cookieStore.get(CART_COOKIE)?.value
-
-    if (!sessionId) {
-      return NextResponse.json({ items: [], totalItems: 0 })
-    }
-
-    const prisma = getPrisma()
-    const cart = await prisma.cart.findUnique({
-      where: { sessionId },
+async function getOrCreateCart(prisma: ReturnType<typeof getPrisma>, userId: string | null, sessionId: string | null) {
+  if (userId) {
+    let cart = await prisma.cart.findFirst({
+      where: { userId },
       include: { items: true },
     })
+    if (cart) return cart
+    
+    if (sessionId) {
+      const sessionCart = await prisma.cart.findUnique({
+        where: { sessionId },
+        include: { items: true },
+      })
+      if (sessionCart) {
+        cart = await prisma.cart.update({
+          where: { id: sessionCart.id },
+          data: { userId, sessionId: null },
+          include: { items: true },
+        })
+        return cart
+      }
+    }
+    
+    cart = await prisma.cart.create({
+      data: { userId },
+      include: { items: true },
+    })
+    return cart
+  }
+  
+  if (!sessionId) return null
+  
+  let cart = await prisma.cart.findUnique({
+    where: { sessionId },
+    include: { items: true },
+  })
+  
+  if (!cart) {
+    cart = await prisma.cart.create({
+      data: { sessionId },
+      include: { items: true },
+    })
+  }
+  
+  return cart
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const prisma = getPrisma()
+    const user = await getCurrentUser(request)
+    const cookieStore = await cookies()
+    const sessionId = cookieStore.get(CART_COOKIE)?.value || null
+
+    const cart = await getOrCreateCart(prisma, user?.sub || null, sessionId)
 
     if (!cart) {
       return NextResponse.json({ items: [], totalItems: 0 })
@@ -50,10 +92,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const prisma = getPrisma()
+    const user = await getCurrentUser(request)
     const cookieStore = await cookies()
-    let sessionId = cookieStore.get(CART_COOKIE)?.value
+    let sessionId = cookieStore.get(CART_COOKIE)?.value || null
 
-    if (!sessionId) {
+    if (!sessionId && !user) {
       sessionId = getOrCreateSessionId()
       cookieStore.set(CART_COOKIE, sessionId, {
         httpOnly: true,
@@ -74,16 +117,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let cart = await prisma.cart.findUnique({
-      where: { sessionId },
-      include: { items: true },
-    })
-
+    const cart = await getOrCreateCart(prisma, user?.sub || null, sessionId)
+    
     if (!cart) {
-      cart = await prisma.cart.create({
-        data: { sessionId },
-        include: { items: true },
-      })
+      return NextResponse.json({ error: 'Erro ao criar carrinho' }, { status: 500 })
     }
 
     const existingItem = cart.items.find(

@@ -5,6 +5,7 @@ import { Playfair_Display, Inter } from 'next/font/google'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as SonnerToaster } from 'sonner'
 import { CartProvider } from '@/context/CartContext'
+import { AuthProvider } from '@/context/AuthContext'
 import './globals.css'
 
 const playfair = Playfair_Display({
@@ -37,9 +38,10 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${playfair.variable} ${inter.variable}`}>
-        <CartProvider>
-          {children}
-          <Toaster />
+        <AuthProvider>
+          <CartProvider>
+            {children}
+            <Toaster />
           <SonnerToaster
             theme="dark"
             position="top-center"
@@ -53,7 +55,8 @@ export default function RootLayout({
               },
             }}
           />
-        </CartProvider>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   )
