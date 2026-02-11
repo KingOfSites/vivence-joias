@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { getPrisma } from '@/lib/prisma'
+import type { PrismaClient } from '@prisma/client'
 import { getCurrentUser } from '@/lib/auth'
+
+export const dynamic = 'force-dynamic'
 
 const CART_COOKIE = 'vivence_cart_id'
 
@@ -9,7 +11,7 @@ function getOrCreateSessionId(): string {
   return crypto.randomUUID()
 }
 
-async function getOrCreateCart(prisma: ReturnType<typeof getPrisma>, userId: string | null, sessionId: string | null) {
+async function getOrCreateCart(prisma: PrismaClient, userId: string | null, sessionId: string | null) {
   if (userId) {
     let cart = await prisma.cart.findFirst({
       where: { userId },
@@ -58,6 +60,7 @@ async function getOrCreateCart(prisma: ReturnType<typeof getPrisma>, userId: str
 
 export async function GET(request: NextRequest) {
   try {
+    const { getPrisma } = await import('@/lib/prisma')
     const prisma = getPrisma()
     const user = await getCurrentUser(request)
     const cookieStore = await cookies()
@@ -91,6 +94,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { getPrisma } = await import('@/lib/prisma')
     const prisma = getPrisma()
     const user = await getCurrentUser(request)
     const cookieStore = await cookies()

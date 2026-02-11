@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { getPrisma } from '@/lib/prisma'
+import type { PrismaClient } from '@prisma/client'
 import { getCurrentUser } from '@/lib/auth'
+
+export const dynamic = 'force-dynamic'
 
 const CART_COOKIE = 'vivence_cart_id'
 
-async function findCart(prisma: ReturnType<typeof getPrisma>, userId: string | null, sessionId: string | null) {
+async function findCart(prisma: PrismaClient, userId: string | null, sessionId: string | null) {
   if (userId) {
     return prisma.cart.findFirst({
       where: { userId },
@@ -26,6 +28,7 @@ export async function PATCH(
   { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
+    const { getPrisma } = await import('@/lib/prisma')
     const prisma = getPrisma()
     const { itemId } = await params
     const user = await getCurrentUser(request)
@@ -77,6 +80,7 @@ export async function DELETE(
   { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
+    const { getPrisma } = await import('@/lib/prisma')
     const prisma = getPrisma()
     const { itemId } = await params
     const user = await getCurrentUser(request)
