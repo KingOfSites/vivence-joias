@@ -161,14 +161,19 @@ function toProductDetail(product: ProductWithCategories): ProductDetail {
 
 async function listProducts(where?: Prisma.ProductWhereInput, limit?: number) {
   if (!process.env.DATABASE_URL) return []
-  const { getPrisma } = await import('./prisma')
-  const prisma = getPrisma()
-  return prisma.product.findMany({
-    where: { status: 'ACTIVE', ...where },
-    include: { categories: { include: { category: true } } },
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-  })
+  try {
+    const { getPrisma } = await import('./prisma')
+    const prisma = getPrisma()
+    return await prisma.product.findMany({
+      where: { status: 'ACTIVE', ...where },
+      include: { categories: { include: { category: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    })
+  } catch (error) {
+    console.error('[products] listProducts error', error)
+    return []
+  }
 }
 
 export async function getAllProducts(): Promise<ProductDetail[]> {
@@ -183,68 +188,83 @@ export async function getFeaturedProducts(limit = 4): Promise<ProductDetail[]> {
 
 export async function getProductBySlug(slug: string): Promise<ProductDetail | undefined> {
   if (!process.env.DATABASE_URL) return undefined
-  const { getPrisma } = await import('./prisma')
-  const prisma = getPrisma()
-  const product = await prisma.product.findFirst({
-    where: { slug, status: 'ACTIVE' },
-    include: { categories: { include: { category: true } } },
-  })
-  if (!product) return undefined
-  return toProductDetail(product)
+  try {
+    const { getPrisma } = await import('./prisma')
+    const prisma = getPrisma()
+    const product = await prisma.product.findFirst({
+      where: { slug, status: 'ACTIVE' },
+      include: { categories: { include: { category: true } } },
+    })
+    if (!product) return undefined
+    return toProductDetail(product)
+  } catch (error) {
+    console.error('[products] getProductBySlug error', error)
+    return undefined
+  }
 }
 
 export async function getAllProductSlugs(): Promise<string[]> {
   if (!process.env.DATABASE_URL) return []
-  const { getPrisma } = await import('./prisma')
-  const prisma = getPrisma()
-  const products = await prisma.product.findMany({
-    where: { status: 'ACTIVE' },
-    select: { slug: true },
-    orderBy: { createdAt: 'desc' },
-  })
-  return products.map((p) => p.slug)
+  try {
+    const { getPrisma } = await import('./prisma')
+    const prisma = getPrisma()
+    const products = await prisma.product.findMany({
+      where: { status: 'ACTIVE' },
+      select: { slug: true },
+      orderBy: { createdAt: 'desc' },
+    })
+    return products.map((p) => p.slug)
+  } catch (error) {
+    console.error('[products] getAllProductSlugs error', error)
+    return []
+  }
 }
 
 export async function getRelatedProducts(currentSlug: string, limit = 3): Promise<ProductDetail[]> {
   if (!process.env.DATABASE_URL) return []
-  const { getPrisma } = await import('./prisma')
-  const prisma = getPrisma()
-  const current = await prisma.product.findFirst({
-    where: { slug: currentSlug, status: 'ACTIVE' },
-    include: { categories: { include: { category: true } } },
-  })
-  if (!current) return []
+  try {
+    const { getPrisma } = await import('./prisma')
+    const prisma = getPrisma()
+    const current = await prisma.product.findFirst({
+      where: { slug: currentSlug, status: 'ACTIVE' },
+      include: { categories: { include: { category: true } } },
+    })
+    if (!current) return []
 
-  const categoryIds = current.categories.map((c) => c.categoryId)
-  const related = await prisma.product.findMany({
-    where: {
-      status: 'ACTIVE',
-      slug: { not: currentSlug },
-      OR: [
-        categoryIds.length ? { categories: { some: { categoryId: { in: categoryIds } } } } : undefined,
-        current.collection ? { collection: current.collection } : undefined,
-      ].filter(Boolean) as Prisma.ProductWhereInput[],
-    },
-    include: { categories: { include: { category: true } } },
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-  })
+    const categoryIds = current.categories.map((c) => c.categoryId)
+    const related = await prisma.product.findMany({
+      where: {
+        status: 'ACTIVE',
+        slug: { not: currentSlug },
+        OR: [
+          categoryIds.length ? { categories: { some: { categoryId: { in: categoryIds } } } } : undefined,
+          current.collection ? { collection: current.collection } : undefined,
+        ].filter(Boolean) as Prisma.ProductWhereInput[],
+      },
+      include: { categories: { include: { category: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    })
 
-  if (related.length >= limit) {
-    return related.map(toProductDetail)
+    if (related.length >= limit) {
+      return related.map(toProductDetail)
+    }
+
+    const fill = await prisma.product.findMany({
+      where: {
+        status: 'ACTIVE',
+        slug: { notIn: [currentSlug, ...related.map((p) => p.slug)] },
+      },
+      include: { categories: { include: { category: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: limit - related.length,
+    })
+
+    return [...related, ...fill].map(toProductDetail)
+  } catch (error) {
+    console.error('[products] getRelatedProducts error', error)
+    return []
   }
-
-  const fill = await prisma.product.findMany({
-    where: {
-      status: 'ACTIVE',
-      slug: { notIn: [currentSlug, ...related.map((p) => p.slug)] },
-    },
-    include: { categories: { include: { category: true } } },
-    orderBy: { createdAt: 'desc' },
-    take: limit - related.length,
-  })
-
-  return [...related, ...fill].map(toProductDetail)
 }
 
 export async function getProductsByCategory(category: string): Promise<ProductDetail[]> {
