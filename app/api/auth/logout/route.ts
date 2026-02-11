@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { clearAuthCookie, getCurrentUser } from '@/lib/auth'
-import { getPrisma } from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 
 const CART_COOKIE = 'vivence_cart_id'
 
@@ -28,7 +29,8 @@ export async function POST(request: Request) {
     }
 
     // Criar um novo carrinho vazio para a sessão (se houver sessionId)
-    if (sessionId) {
+    if (sessionId && process.env.DATABASE_URL) {
+      const { getPrisma } = await import('@/lib/prisma')
       const prisma = getPrisma()
       // Verificar se já existe um carrinho para esta sessão
       const existingCart = await prisma.cart.findUnique({
