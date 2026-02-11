@@ -6,6 +6,8 @@ import { NextRequest, NextResponse } from 'next/server'
  * Body: { items: Array<{ id, title, quantity, unit_price }> }
  * unit_price em reais (ex: 89.90 para R$ 89,90)
  */
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   const accessToken =
     process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN

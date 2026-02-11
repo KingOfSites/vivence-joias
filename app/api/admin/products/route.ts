@@ -1,6 +1,7 @@
-﻿import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
-import { getPrisma } from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
   try {
@@ -18,6 +19,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Name and slug are required.' }, { status: 400 })
     }
 
+    const { getPrisma } = await import('@/lib/prisma')
     const prisma = getPrisma()
     const product = await prisma.product.create({
       data: {

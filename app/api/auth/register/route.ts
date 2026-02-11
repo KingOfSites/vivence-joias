@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
-import { getPrisma } from '@/lib/prisma'
 import { signToken, buildAuthCookie } from '@/lib/auth'
+
+export const dynamic = 'force-dynamic'
 
 const CART_COOKIE = 'vivence_cart_id'
 
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const { getPrisma } = await import('@/lib/prisma')
     const prisma = getPrisma()
     const existing = await prisma.user.findUnique({
       where: { email: emailTrim },
