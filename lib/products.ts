@@ -1,5 +1,4 @@
-import { Prisma } from '@prisma/client'
-import { getPrisma } from './prisma'
+import type { Prisma } from '@prisma/client'
 
 export interface ProductSpec {
   label: string
@@ -161,6 +160,8 @@ function toProductDetail(product: ProductWithCategories): ProductDetail {
 }
 
 async function listProducts(where?: Prisma.ProductWhereInput, limit?: number) {
+  if (!process.env.DATABASE_URL) return []
+  const { getPrisma } = await import('./prisma')
   const prisma = getPrisma()
   return prisma.product.findMany({
     where: { status: 'ACTIVE', ...where },
@@ -181,6 +182,8 @@ export async function getFeaturedProducts(limit = 4): Promise<ProductDetail[]> {
 }
 
 export async function getProductBySlug(slug: string): Promise<ProductDetail | undefined> {
+  if (!process.env.DATABASE_URL) return undefined
+  const { getPrisma } = await import('./prisma')
   const prisma = getPrisma()
   const product = await prisma.product.findFirst({
     where: { slug, status: 'ACTIVE' },
@@ -191,6 +194,8 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | un
 }
 
 export async function getAllProductSlugs(): Promise<string[]> {
+  if (!process.env.DATABASE_URL) return []
+  const { getPrisma } = await import('./prisma')
   const prisma = getPrisma()
   const products = await prisma.product.findMany({
     where: { status: 'ACTIVE' },
@@ -201,6 +206,8 @@ export async function getAllProductSlugs(): Promise<string[]> {
 }
 
 export async function getRelatedProducts(currentSlug: string, limit = 3): Promise<ProductDetail[]> {
+  if (!process.env.DATABASE_URL) return []
+  const { getPrisma } = await import('./prisma')
   const prisma = getPrisma()
   const current = await prisma.product.findFirst({
     where: { slug: currentSlug, status: 'ACTIVE' },
