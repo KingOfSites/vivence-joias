@@ -6,12 +6,14 @@ import { useSearchParams } from 'next/navigation'
 import Header from '@/components/Header/Header'
 import Footer from '@/components/Footer/Footer'
 import { CheckCircle, Clock, XCircle } from 'lucide-react'
+import { useCart } from '@/context/CartContext'
 import styles from './obrigado.module.css'
 
 function ObrigadoContent() {
   const searchParams = useSearchParams()
   const status = searchParams.get('status') || ''
   const [isCreatingOrder, setIsCreatingOrder] = useState(true)
+  const { refreshCart } = useCart()
 
   useEffect(() => {
     if (status === 'approved') {
@@ -29,6 +31,8 @@ function ObrigadoContent() {
       })
       if (!res.ok) {
         console.error('Erro ao criar pedido:', res.statusText)
+      } else {
+        await refreshCart()
       }
     } catch (error) {
       console.error('Erro ao registrar pedido:', error)
