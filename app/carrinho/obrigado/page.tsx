@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import Header from '@/components/Header/Header'
@@ -11,6 +11,31 @@ import styles from './obrigado.module.css'
 function ObrigadoContent() {
   const searchParams = useSearchParams()
   const status = searchParams.get('status') || ''
+  const [isCreatingOrder, setIsCreatingOrder] = useState(true)
+
+  useEffect(() => {
+    if (status === 'approved') {
+      createOrder()
+    } else {
+      setIsCreatingOrder(false)
+    }
+  }, [status])
+
+  const createOrder = async () => {
+    try {
+      const res = await fetch('/api/orders/create', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        console.error('Erro ao criar pedido:', res.statusText)
+      }
+    } catch (error) {
+      console.error('Erro ao registrar pedido:', error)
+    } finally {
+      setIsCreatingOrder(false)
+    }
+  }
 
   const config = {
     approved: {
@@ -61,6 +86,11 @@ function ObrigadoContent() {
             </div>
             <h1 className={styles.title}>{item?.title ?? 'Obrigado!'}</h1>
             <p className={styles.message}>{item?.message ?? 'Seu pedido foi recebido.'}</p>
+            {isCreatingOrder && status === 'approved' && (
+              <p className={styles.message} style={{ fontSize: '0.9rem', marginTop: '1rem', opacity: 0.7 }}>
+                Registrando seu pedido...
+              </p>
+            )}
             <div className={styles.actions}>
               <Link href="/" className={styles.primaryLink}>
                 Voltar ao início
