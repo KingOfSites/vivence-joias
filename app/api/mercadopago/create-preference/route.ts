@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { getPrisma } from '@/lib/prisma'
 
 /**
  * Cria uma preferência de pagamento no Mercado Pago (Checkout Pro).
@@ -9,6 +11,14 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
+	const user = await getCurrentUser(request)
+	if (!user) {
+		return NextResponse.json(
+			{ error: 'Usuário não autenticado' },
+			{ status: 401 }
+		)
+	}
+
 	const accessToken =
 		process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN
 	if (!accessToken) {
@@ -19,6 +29,20 @@ export async function POST(request: NextRequest) {
 	}
 
 	try {
+		const db = getPrisma()
+
+		// Busca o carrinho do usuário
+		const cart = await db.cart.findFirst({
+			where: { userId: user.sub },
+		})
+
+		if (!cart) {
+			return NextResponse.json(
+				{ error: 'Carrinho não encontrado' },
+				{ status: 404 }
+			)
+		}
+
 		const body = await request.json()
 		const { items } = body as {
 			items: Array<{
@@ -55,6 +79,7 @@ export async function POST(request: NextRequest) {
 				currency_id: 'BRL',
 				...(item.picture_url && { picture_url: item.picture_url }),
 			})),
+			external_reference: cart.id,
 			back_urls: {
 				success: `${origin}/carrinho/obrigado?status=approved`,
 				failure: `${origin}/carrinho/obrigado?status=rejected`,
