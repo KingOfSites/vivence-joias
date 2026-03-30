@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
 				pending: `${origin}/carrinho/obrigado?status=pending`,
 			},
 			auto_return: origin.startsWith('https') ? 'approved' : undefined,
+			notification_url: `${origin}/api/mercadopago/webhook`,
 		}
 
 		const res = await fetch(
