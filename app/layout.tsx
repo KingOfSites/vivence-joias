@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { Toaster as SonnerToaster } from 'sonner'
 import { CartProvider } from '@/context/CartContext'
 import { AuthProvider } from '@/context/AuthContext'
+import { WhatsAppFloatingButton } from '@/components/WhatsAppFloatingButton'
 import './globals.css'
 
 const playfair = Playfair_Display({
@@ -41,6 +42,7 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             {children}
+            <WhatsAppFloatingButton />
             <Toaster />
           <SonnerToaster
             theme="dark"
