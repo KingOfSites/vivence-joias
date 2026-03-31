@@ -144,6 +144,16 @@ export async function POST(request: NextRequest) {
       include: { items: true },
     })
 
+    // Resolve productId (String, FK para Product.id) a partir do slug
+    const slugs = cart?.items.map((i) => i.productSlug) ?? []
+    const products = slugs.length
+      ? await db.product.findMany({
+          where: { slug: { in: slugs } },
+          select: { id: true, slug: true },
+        })
+      : []
+    const slugToId = Object.fromEntries(products.map((p) => [p.slug, p.id]))
+
     if (!cart || !cart.userId) {
       console.warn('[Mercado Pago Webhook] Carrinho não encontrado:', cartId)
       return NextResponse.json({ success: true })
@@ -171,7 +181,7 @@ export async function POST(request: NextRequest) {
         items: {
           create: cart.items.map((item) => ({
             productSlug: item.productSlug,
-            productId: item.productId.toString(),
+            productId: slugToId[item.productSlug] ?? null,
             name: item.name,
             price: item.price,
             priceRaw: item.priceRaw,
