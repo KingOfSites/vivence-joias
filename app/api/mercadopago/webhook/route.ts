@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPrisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
@@ -23,7 +24,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Lê o body como texto para validação de assinatura
+    // Lê o body como texto para validação de assinatura e hash
     const rawBody = await request.text()
     let body: Record<string, unknown> = {}
     try {
@@ -32,26 +33,26 @@ export async function POST(request: NextRequest) {
       // body não é JSON (pode ser form-encoded em notificações antigas)
     }
 
+    const xSignature = request.headers.get('x-signature')
+    const xRequestId = request.headers.get('x-request-id')
+    const dataId = request.nextUrl.searchParams.get('data.id')
+
     // Valida assinatura x-signature se a chave secreta estiver configurada
     const webhookSecret = process.env.MP_WEBHOOK_SECRET
-    if (webhookSecret) {
-      const xSignature = request.headers.get('x-signature')
-      const xRequestId = request.headers.get('x-request-id')
-      const dataId = request.nextUrl.searchParams.get('data.id')
+    let signatureValid = false
 
-      if (xSignature) {
-        const isValid = validateSignature({
-          xSignature,
-          xRequestId,
-          dataId,
-          ts: '',
-          secret: webhookSecret,
-        })
+    if (webhookSecret && xSignature) {
+      signatureValid = validateSignature({
+        xSignature,
+        xRequestId,
+        dataId,
+        ts: '',
+        secret: webhookSecret,
+      })
 
-        if (!isValid) {
-          console.warn('[Mercado Pago Webhook] Assinatura inválida')
-          return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-        }
+      if (!signatureValid) {
+        console.warn('[Mercado Pago Webhook] Assinatura inválida')
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
       }
     }
 
@@ -69,6 +70,29 @@ export async function POST(request: NextRequest) {
 
     const topic = queryTopic || queryType || type
     const paymentId = data?.id || queryDataId || queryId
+    const eventType = action || (topic ? `topic.${topic}` : 'unknown')
+
+    const db = getPrisma()
+
+    // Registra o evento de webhook como audit log
+    const payloadHash = crypto.createHash('sha256').update(rawBody).digest('hex')
+    let webhookEvent = await db.webhookEvent.create({
+      data: {
+        provider: 'MERCADO_PAGO',
+        eventType,
+        providerEventId: xRequestId ?? null,
+        status: 'RECEIVED',
+        signatureValid,
+        payloadHash,
+        headers: {
+          'x-signature': xSignature ?? undefined,
+          'x-request-id': xRequestId ?? undefined,
+          'content-type': request.headers.get('content-type') ?? undefined,
+          'user-agent': request.headers.get('user-agent') ?? undefined,
+        } as Prisma.InputJsonValue,
+        payload: body as Prisma.InputJsonValue,
+      },
+    }).catch(() => null) // ignora erro de duplicata (retry do MP)
 
     // Aceita notificações de pagamento (formato novo com action ou formato antigo com topic)
     const isPaymentEvent =
@@ -123,8 +147,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
-    const db = getPrisma()
-
     // Verifica se order já foi criada para este pagamento (idempotência)
     const existingOrder = await db.order.findFirst({
       where: {
@@ -169,6 +191,19 @@ export async function POST(request: NextRequest) {
       cart.items.reduce((sum, item) => sum + item.priceRaw * item.quantity, 0) * 100
     )
 
+    // Extrai endereço de entrega da resposta do Mercado Pago
+    const receiverAddress = payment.shipping?.receiver_address
+    const shippingAddress = receiverAddress
+      ? {
+          zipCode: receiverAddress.zip_code ?? null,
+          street: receiverAddress.street_name ?? null,
+          number: receiverAddress.street_number ?? null,
+          complement: receiverAddress.apartment ?? receiverAddress.floor ?? null,
+          city: receiverAddress.city_name ?? null,
+          state: receiverAddress.state_name ?? null,
+        }
+      : null
+
     // Cria a Order
     const order = await db.order.create({
       data: {
@@ -178,6 +213,7 @@ export async function POST(request: NextRequest) {
         status: 'PAID',
         provider: 'MERCADO_PAGO',
         providerOrderId: String(paymentId),
+        shippingAddress: shippingAddress ?? Prisma.JsonNull,
         items: {
           create: cart.items.map((item) => ({
             productSlug: item.productSlug,
@@ -194,10 +230,46 @@ export async function POST(request: NextRequest) {
       include: { items: true },
     })
 
+    // Cria Invoice vinculada à Order
+    const invoice = await db.invoice.create({
+      data: {
+        orderId: order.id,
+        provider: 'MERCADO_PAGO',
+        status: 'PAID',
+        providerInvoiceId: payment.preference_id ? String(payment.preference_id) : null,
+      },
+    })
+
+    // Cria Payment vinculado à Invoice (necessário para o painel-vivence)
+    const dbPayment = await db.payment.create({
+      data: {
+        invoiceId: invoice.id,
+        provider: 'MERCADO_PAGO',
+        method: 'MERCADOPAGO',
+        status: 'APPROVED',
+        amountCents: totalAmountCents,
+        paidAt: payment.date_approved ? new Date(payment.date_approved) : new Date(),
+        providerPaymentId: String(paymentId),
+        providerRaw: payment,
+      },
+    })
+
+    // Atualiza o WebhookEvent com o resultado do processamento
+    if (webhookEvent) {
+      await db.webhookEvent.update({
+        where: { id: webhookEvent.id },
+        data: {
+          status: 'PROCESSED',
+          processedAt: new Date(),
+          relatedPaymentId: dbPayment.id,
+        },
+      })
+    }
+
     // Limpa o carrinho
     await db.cartItem.deleteMany({ where: { cartId } })
 
-    console.log(`[Mercado Pago Webhook] Order criada: ${order.id} | Pagamento: ${paymentId}`)
+    console.log(`[Mercado Pago Webhook] Order criada: ${order.id} | Invoice: ${invoice.id} | Pagamento: ${paymentId}`)
 
     return NextResponse.json({ success: true, orderId: order.id })
   } catch (error) {
